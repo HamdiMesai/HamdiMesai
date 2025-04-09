@@ -3,69 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة النقر البسيطة</title>
+    <title>لعبة XO</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background-color: #f0f0f0;
             padding: 20px;
         }
         
-        #game-container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 500px;
-            margin: 0 auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
         }
         
-        #click-button {
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            background-color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .cell:hover {
+            background-color: #eee;
+        }
+        
+        #status {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        #reset-button {
             background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
+            padding: 10px 20px;
+            font-size: 16px;
             border-radius: 5px;
             cursor: pointer;
-            margin: 20px 0;
         }
         
-        #click-button:hover {
+        #reset-button:hover {
             background-color: #45a049;
         }
         
-        #score-display {
-            font-size: 24px;
-            margin: 20px 0;
+        .x-symbol {
+            color: #f44336;
+        }
+        
+        .o-symbol {
+            color: #2196F3;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <h1>لعبة النقر البسيطة</h1>
-        <p>انقر على الزر لزيادة نقاطك!</p>
-        
-        <div id="score-display">النقاط: 0</div>
-        <button id="click-button">انقر هنا!</button>
+    <h1>لعبة XO</h1>
+    <div id="status">دور لاعب: X</div>
+    <div id="game-board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
     </div>
+    <button id="reset-button">إعادة اللعبة</button>
 
     <script>
-        let score = 0;
-        const clickButton = document.getElementById('click-button');
-        const scoreDisplay = document.getElementById('score-display');
+        const cells = document.querySelectorAll('.cell');
+        const statusDisplay = document.querySelector('#status');
+        const resetButton = document.querySelector('#reset-button');
         
-        clickButton.addEventListener('click', function() {
-            score++;
-            scoreDisplay.textContent = `النقاط: ${score}`;
+        let gameActive = true;
+        let currentPlayer = 'X';
+        let gameState = ['', '', '', '', '', '', '', '', ''];
+        
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // صفوف
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // أعمدة
+            [0, 4, 8], [2, 4, 6]             // قطري
+        ];
+        
+        function handleCellClick(e) {
+            const clickedCell = e.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
             
-            // تأثير مرئي عند النقر
-            this.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                this.style.transform = 'scale(1)';
-            }, 100);
-        });
+            if (gameState[clickedCellIndex] !== '' || !gameActive) {
+                return;
+            }
+            
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.innerHTML = currentPlayer;
+            clickedCell.classList.add(currentPlayer === 'X' ? 'x-symbol' : 'o-symbol');
+            
+            checkResult();
+        }
+        
+        function checkResult() {
+            let roundWon = false;
+            
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                
+                if (gameState[a] === '' || gameState[b] === '' || gameState[c] === '') {
+                    continue;
+                }
+                
+                if (gameState[a] === gameState[b] && gameState[b] === gameState[c]) {
+                    roundWon = true;
+                    break;
+                }
+            }
+            
+            if (roundWon) {
+                statusDisplay.textContent = `فاز لاعب ${currentPlayer}!`;
+                gameActive = false;
+                return;
+            }
+            
+            if (!gameState.includes('')) {
+                statusDisplay.textContent = 'تعادل!';
+                gameActive = false;
+                return;
+            }
+            
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            statusDisplay.textContent = `دور لاعب: ${currentPlayer}`;
+        }
+        
+        function resetGame() {
+            gameActive = true;
+            currentPlayer = 'X';
+            gameState = ['', '', '', '', '', '', '', '', ''];
+            statusDisplay.textContent = `دور لاعب: ${currentPlayer}`;
+            
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x-symbol', 'o-symbol');
+            });
+        }
+        
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        resetButton.addEventListener('click', resetGame);
     </script>
 </body>
 </html>
