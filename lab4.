@@ -1,0 +1,161 @@
+.data
+# Text strings for tasks 4.1 and 4.2
+prompt1:    .asciiz "Please enter the first integer: "
+prompt2:    .asciiz "Please enter the second integer: "
+result_msg: .asciiz "\n*** The returned result from the procedure is: "
+s0_check_msg: .asciiz "\n*** The value of $s0 after return (should be 100): "
+newline:    .asciiz "\n"
+
+# Text strings for the Fibonacci challenge
+fib_prompt: .asciiz "\n--- Fibonacci Challenge ---\nPlease enter the number N to compute Fib(N): "
+fib_result: .asciiz "==> The result Fib(N) is: "
+
+
+.text
+.globl main
+.globl main_fib   # To allow direct execution of the Fibonacci function
+
+###########################################################
+# Procedure 1: add_two_Numbers (Tasks 4.1 & 4.2)
+###########################################################
+
+# Description: Adds two arguments ($a0, $a1), returns the sum ($v0),
+# and saves/restores $s0.
+add_two_Numbers:
+    # Prolog: Save $s0 (caller-saved register)
+    # The procedure must save any $s- registers it uses.
+    subu $sp, $sp, 4     # Allocate 4 bytes on the stack
+    sw  $s0, 0($sp)      # Save original value of $s0
+
+    # Modify $s0 to demonstrate the need for saving/restoring
+    li $s0, 999          # Assign a temporary value to $s0
+
+    # Body of the procedure: addition
+    add $v0, $a0, $a1    # sum = $a0 + $a1. The result is in $v0.
+
+    # Epilog: restore $s0
+    lw $s0, 0($sp)       # Restore original $s0 (100)
+    addiu $sp, $sp, 4    # Free the stack space
+
+    jr $ra               # Return to caller
+
+###########################################################
+# Main program: main (Tasks 4.1 & 4.2)
+###########################################################
+main:
+    # Task 4.2: Initialize $s0 to 100
+    li $s0, 100
+
+    # 1. Ask for the first integer
+    li $v0, 4
+    la $a0, prompt1
+    syscall
+
+    li $v0, 5
+    syscall
+    move $t0, $v0        # Store first input
+
+    # 2. Ask for the second integer
+    li $v0, 4
+    la $a0, prompt2
+    syscall
+
+    li $v0, 5
+    syscall
+    move $t1, $v0        # Store second input
+
+    # 3. Call add_two_Numbers
+    move $a0, $t0        # Pass argument 1
+    move $a1, $t1        # Pass argument 2
+    jal add_two_Numbers  # Call the procedure
+
+    # After return, the result is in $v0
+    move $t2, $v0
+
+    # 4. Print the result
+    li $v0, 4
+    la $a0, result_msg
+    syscall
+
+    li $v0, 1
+    move $a0, $t2
+    syscall
+
+    # 5. Print the value of $s0 to verify
+    li $v0, 4
+    la $a0, s0_check_msg
+    syscall
+
+    li $v0, 1
+    move $a0, $s0       # Should be 100 again
+    syscall
+
+    j exit_program
+
+###########################################################
+# Procedure 2: fib (Recursive Fibonacci)
+###########################################################
+# Description: Computes Fib(N) recursively.
+# Argument: N in $a0
+# Return: Fib(N) in $v0
+# Needs to save $ra and $a0 on stack.
+fib:
+    # Prolog: Save $ra and $a0
+    subu $sp, $sp, 8
+    sw $ra, 4($sp)
+    sw $a0, 0($sp)
+
+    # Base case: if N <= 1
+    li $t0, 1
+    ble $a0, $t0, base_case
+
+    # Recursive case: Fib(N) = Fib(N-1) + Fib(N-2)
+
+    # Compute Fib(N-1)
+    addi $a0, $a0, -1
+    jal fib
+    move $t1, $v0        # Fib(N-1)
+
+    # Restore original N before computing Fib(N-2)
+    lw $a0, 0($sp)
+
+    # Compute Fib(N-2)
+    addi $a0, $a0, -2
+    jal fib
+    move $t2, $v0        # Fib(N-2)
+
+    add $v0, $t1, $t2    # Fib(N) = t1 + t2
+    j epilog_fib
+
+base_case:
+    move $v0, $a0        # Fib(N) = N (0 or 1)
+
+epilog_fib:
+    # Restore $ra and $a0
+    lw $ra, 4($sp)
+    lw $a0, 0($sp)
+    addiu $sp, $sp, 8    # Free stack space
+    jr $ra               # Return
+
+###########################################################
+# Main program to run Fibonacci challenge: main_fib
+###########################################################
+main_fib:
+    # 1. Ask for N
+    li $v0, 4
+    la $a0, fib_prompt
+    syscall
+
+    li $v0, 5
+    syscall
+    move $a0, $v0        # Pass N to fib
+
+    # 2. Call Fibonacci
+    jal fib
+
+    # 3. Print result
+    move $t0, $v0
+
+    li $v0, 4
+    la $a0, fib_result
+    syscall
