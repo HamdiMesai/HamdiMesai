@@ -1,0 +1,78 @@
+#Lab 4: Procedures and the Stack
+# Student: [Mohammed bachir MESAI MOHAMMED] - [Group 5]
+
+         .data 
+prompt1:     .asciiz "Enter the first integer: "
+prompt2:     .asciiz "Enter the second integer: "
+result_msg:  .asciiz "The sum is: "
+s0_msg:      .asciiz "\nThe value of $s0 in main is: "
+
+.text
+.globl main
+
+main:
+    li $s0,100
+
+    # --- Read first integer ---
+    li $v0,4
+    la $a0,prompt1
+    syscall
+
+    li $v0,5
+    syscall
+    move $a0,$v0      # first number in $a0
+
+    # --- Read second integer ---
+    li $v0,4
+    la $a0,prompt2
+    syscall
+
+    li $v0,5
+    syscall
+    move $a1,$v0      # second number in $a1
+
+    # Call function
+    jal add_two_numbers
+    move $t0,$v0      # result returned in $v0
+
+    # --- Print result ---
+    li $v0,4
+    la $a0,result_msg
+    syscall
+
+    li $v0,1
+    move $a0,$t0
+    syscall
+
+    # --- Print $s0 from main ---
+    li $v0,4
+    la $a0,s0_msg
+    syscall
+
+    li $v0,1
+    move $a0,$s0
+    syscall
+
+    # exit
+    li $v0,10
+    syscall
+
+# ------------------------------------------------
+# FUNCTION: add_two_numbers
+# ------------------------------------------------
+
+add_two_numbers:
+    # Prologue
+    addiu $sp,$sp,-8
+    sw $ra,4($sp)
+    sw $s0,0($sp)
+
+    # Body
+    add $v0,$a0,$a1   # return a0 + a1
+    li $s0,999        # Example modification to show stack saving works
+
+    # Epilogue
+    lw $s0,0($sp)
+    lw $ra,4($sp)
+    addiu $sp,$sp,8
+    jr $ra
