@@ -1,0 +1,87 @@
+#Lab 5: Arrays and String Manipulation
+#Student: [Mohammed Bachir Mesai Mohammed ] - [Group 5]
+         .data
+my_array:   .word 10, -5, 20, 7, 100
+array_len:  .word 5
+sum_msg:    .asciiz "Array sum: "
+my_string:  .asciiz "COA course is awesome! (MIPS)"
+vowel_msg:  .asciiz "\nVowel count: "
+nl:         .asciiz "\n"
+
+.text
+.globl main
+
+main:
+################################
+# Part 1: Array Sum
+################################
+    la   $t0, my_array     # base address of array
+    lw   $t1, array_len   # length
+    li   $t2, 0           # sum = 0
+    li   $t3, 0           # index i = 0
+
+sum_loop:
+    beq  $t3, $t1, sum_done
+    lw   $t4, 0($t0)      # load array[i]
+    add  $t2, $t2, $t4   # sum += array[i]
+    addi $t0, $t0, 4     # move to next element
+    addi $t3, $t3, 1
+    j    sum_loop
+
+sum_done:
+    # print "Array sum: "
+    li   $v0, 4
+    la   $a0, sum_msg
+    syscall
+
+    # print sum
+    li   $v0, 1
+    move $a0, $t2
+    syscall
+
+################################
+# Part 2: Vowel Count
+################################
+    la   $t0, my_string   # pointer to string
+    li   $t1, 0           # vowel count
+
+vowel_loop:
+    lb   $t2, 0($t0)
+    beq  $t2, $zero, vowel_done
+
+    # check vowels (a e i o u + uppercase)
+    li $t3,'a' ; beq $t2,$t3,inc
+    li $t3,'e' ; beq $t2,$t3,inc
+    li $t3,'i' ; beq $t2,$t3,inc
+    li $t3,'o' ; beq $t2,$t3,inc
+    li $t3,'u' ; beq $t2,$t3,inc
+    li $t3,'A' ; beq $t2,$t3,inc
+    li $t3,'E' ; beq $t2,$t3,inc
+    li $t3,'I' ; beq $t2,$t3,inc
+    li $t3,'O' ; beq $t2,$t3,inc
+    li $t3,'U' ; beq $t2,$t3,inc
+
+next_char:
+    addi $t0, $t0, 1
+    j vowel_loop
+
+inc:
+    addi $t1, $t1, 1
+    j next_char
+
+vowel_done:
+    # print "\nVowel count: "
+    li   $v0, 4
+    la   $a0, vowel_msg
+    syscall
+
+    # print count
+    li   $v0, 1
+    move $a0, $t1
+    syscall
+
+################################
+# Exit
+################################
+    li $v0, 10
+    syscall
