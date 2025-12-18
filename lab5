@@ -1,0 +1,79 @@
+.data
+    array:      .word 10, 20, 30, 40, 32 
+    array_len:  .word 5
+    mystring:   .asciiz "Hello Education World"
+    sum_msg:    .asciiz "Array sum: "
+    vow_msg:    .asciiz "\nVowel count: "
+
+.text
+main:
+    la $t0, array
+    lw $t1, array_len
+    li $t2, 0
+    li $t3, 0
+
+sum_loop:
+    beq $t3, $t1, print_sum
+    lw $t4, 0($t0)
+    add $t2, $t2, $t4
+    addi $t0, $t0, 4
+    addi $t3, $t3, 1
+    j sum_loop
+
+print_sum:
+    li $v0, 4
+    la $a0, sum_msg
+    syscall
+    
+    li $v0, 1
+    move $a0, $t2
+    syscall
+
+    la $t0, mystring
+    li $t1, 0
+
+vowel_loop:
+    lb $t2, 0($t0)
+    beq $t2, $zero, print_vow
+    
+    li $t3, 'a'
+    beq $t2, $t3, is_vowel
+    li $t3, 'e'
+    beq $t2, $t3, is_vowel
+    li $t3, 'i'
+    beq $t2, $t3, is_vowel
+    li $t3, 'o'
+    beq $t2, $t3, is_vowel
+    li $t3, 'u'
+    beq $t2, $t3, is_vowel
+    li $t3, 'A'
+    beq $t2, $t3, is_vowel
+    li $t3, 'E'
+    beq $t2, $t3, is_vowel
+    li $t3, 'I'
+    beq $t2, $t3, is_vowel
+    li $t3, 'O'
+    beq $t2, $t3, is_vowel
+    li $t3, 'U'
+    beq $t2, $t3, is_vowel
+    
+    j next_char
+
+is_vowel:
+    addi $t1, $t1, 1
+
+next_char:
+    addi $t0, $t0, 1
+    j vowel_loop
+
+print_vow:
+    li $v0, 4
+    la $a0, vow_msg
+    syscall
+    
+    li $v0, 1
+    move $a0, $t1
+    syscall
+
+    li $v0, 10
+    syscall
